@@ -13,6 +13,7 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
             _logger = logger;
         }
 
+
         public IActionResult Index()
         {
             return View();
