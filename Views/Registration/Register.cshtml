@@ -1,0 +1,124 @@
+﻿@model GlassCodeTech_Ticketing_System_Project.Models.RegistrationViewModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Register</h2>
+    <form method="post" asp-controller="Registration" asp-action="Register" class="mt-3">
+        <!-- Error summary hidden by default -->
+        <div asp-validation-summary="All" class="alert alert-danger d-none" id="errorSummary"></div>
+
+        <div class="row">
+            <div class="mb-3 col-md-4">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            <div class="mb-3 col-md-4">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" type="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3 col-md-4">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" type="password" id="Password" />
+                <div id="passwordStrength" class="form-text"></div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="mb-3 col-md-6">
+                <label asp-for="CompanyName" class="form-label"></label>
+                <input asp-for="CompanyName" class="form-control" />
+                <span asp-validation-for="CompanyName" class="text-danger"></span>
+            </div>
+            <div class="mb-3 col-md-4">
+                <label asp-for="Position" class="form-label"></label>
+                <input asp-for="Position" class="form-control" />
+                <span asp-validation-for="Position" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <label class="form-label d-block">Role</label>
+            <div class="form-check form-check-inline">
+                <input asp-for="Role" class="form-check-input" type="radio" value="2" id="roleAdmin" />
+                <label class="form-check-label" for="roleAdmin">Admin</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input asp-for="Role" class="form-check-input" type="radio" value="3" id="roleSupporter" />
+                <label class="form-check-label" for="roleSupporter">Supporter</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input asp-for="Role" class="form-check-input" type="radio" value="1" id="roleCustomer" />
+                <label class="form-check-label" for="roleCustomer">Customer</label>
+            </div>
+            <span asp-validation-for="Role" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+    </form>
+</div>
+
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        // ✅ Show validation summary only when errors exist
+        $(function () {
+            function toggleErrorSummary() {
+                if ($(".validation-summary-errors ul li").length > 0) {
+                    $("#errorSummary").show();
+                } else {
+                    $("#errorSummary").hide();
+                }
+            }
+
+            // Run once on page load (for server-side errors)
+            toggleErrorSummary();
+
+            // Re-run whenever form validation updates (client-side)
+            $("form").on("submit", function () {
+                setTimeout(toggleErrorSummary, 50); 
+            });
+        });
+
+        // ✅ Password strength indicator
+        document.getElementById("Password").addEventListener("input", function () {
+            var val = this.value;
+            var strength = 0;
+            if (/[a-z]/.test(val)) strength++;
+            if (/[A-Z]/.test(val)) strength++;
+            if (/[0-9]/.test(val)) strength++;
+            if (/[$&!]/.test(val)) strength++; // covers $, #, &, !
+            
+            var strengthText = "";
+            var strengthColor = "";
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthText = "Weak password";
+                    strengthColor = "red";
+                    break;
+                case 2:
+                    strengthText = "Moderate password";
+                    strengthColor = "orange";
+                    break;
+                case 3:
+                    strengthText = "Strong password";
+                    strengthColor = "green";
+                    break;
+                case 4:
+                    strengthText = "Very strong password";
+                    strengthColor = "darkgreen";
+                    break;
+            }
+            var indicator = document.getElementById("passwordStrength");
+            indicator.innerText = strengthText;
+            indicator.style.color = strengthColor;
+        });
+    </script>
+}

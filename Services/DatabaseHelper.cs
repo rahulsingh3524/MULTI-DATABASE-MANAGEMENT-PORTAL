@@ -23,13 +23,14 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
         // Use secure key/iv in production, ideally via environment variables or secure storage!
         private static readonly string EncryptionKey = "zQ5nD7pRf3KwL8tVeG0aY2uXiJ6vG4Nb"; // 32 chars  for AES-256
         private static readonly string IVString = "bXc9vYt5rUe2tO7k"; // 16 chars for AES
-
+        private readonly string _connectionString;
 
         // Constructor: IConfiguration injected, config path set
         public DatabaseHelper(IConfiguration configuration, string connStringsConfigPath)
         {
             _configuration = configuration;
             _connStringsConfigPath = connStringsConfigPath;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
         // Loads connection string for a given DBID from the JSON config
@@ -48,6 +49,35 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
                 throw new Exception("Connection string not found for DBID: " + dbId);
             return ExecuteStoredProcedureWithConnectionString(connStr, spName, parameters);
         }
+
+        public List<Dictionary<string, object>> ExecuteStoredProcedure(string spName, SqlParameter[] parameters)
+        {
+            var result = new List<Dictionary<string, object>>();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(spName, conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    if (parameters != null)
+                        cmd.Parameters.AddRange(parameters);
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new Dictionary<string, object>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                            }
+                            result.Add(row);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
 
         // Executes SP using provided connection string (low-level API)
         public List<Dictionary<string, object>> ExecuteStoredProcedureWithConnectionString(string connectionString, string spName, SqlParameter[] parameters)
@@ -123,7 +153,40 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
             }
         }
 
+        public List<Dictionary<string, object>> ExecuteSqlQueryWithConnection(string dbId, string sqlQuery, SqlParameter[] parameters = null)
+        {
+            var connectionString = GetConnectionStringFromContext(dbId);
+            if (string.IsNullOrEmpty(connectionString))
+                throw new Exception("Connection string not found for DBID: " + dbId);
 
+            var result = new List<Dictionary<string, object>>();
+
+            using (var conn = new SqlConnection(connectionString))
+            using (var cmd = new SqlCommand(sqlQuery, conn))
+            {
+                cmd.CommandType = CommandType.Text; // Indicates raw SQL query
+
+                if (parameters != null && parameters.Length > 0)
+                    cmd.Parameters.AddRange(parameters);
+
+                conn.Open();
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var row = new Dictionary<string, object>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        }
+                        result.Add(row);
+                    }
+                }
+            }
+
+            return result;
+        }
 
 
     }
