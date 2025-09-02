@@ -1,0 +1,65 @@
+﻿@model GlassCodeTech_Ticketing_System_Project.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+
+            @if (Model.IsPasswordOnly)
+            {
+                @await Html.PartialAsync("_PasswordOnlyLoginPartial", Model.Username)
+            }
+
+            else
+            {
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4 fw-bold text-primary">Login</h3>
+
+                        <form method="post" asp-action="Login" id="loginForm" novalidate>
+                            <div class="mb-3">
+                                <label asp-for="Username" class="form-label">Username</label>
+                                <input asp-for="Username" class="form-control" placeholder="Enter username" required minlength="3" />
+                                <span asp-validation-for="Username" class="text-danger"></span>
+                                <div class="invalid-feedback">Username must be at least 3 characters long.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <input asp-for="Password" class="form-control" type="password" id="password" placeholder="Enter password" required minlength="6" />
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <div class="invalid-feedback">Password must be at least 6 characters long.</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 mt-2">Log In</button>
+
+                            <div class="text-center mt-3">
+                                <a href="@Url.Action("Register", "Registration")" class="text-decoration-none">Don’t have an account? <strong>Register</strong></a>
+                            </div>
+
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger mt-3">
+                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                    {
+                                        <div>@error.ErrorMessage</div>
+                                    }
+                                </div>
+                            }
+                        </form>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
