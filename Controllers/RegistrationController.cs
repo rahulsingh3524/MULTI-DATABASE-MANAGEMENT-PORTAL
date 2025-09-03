@@ -1,9 +1,9 @@
-﻿using GlassCodeTech_Ticketing_System_Project.Services;
+﻿using MULTI___DATABASE_MANAGEMENT_PORTAL.Services;
 using System.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 //using Microsoft.Data.SqlClient;
 
-namespace GlassCodeTech_Ticketing_System_Project.Controllers
+namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
 {
     public class RegistrationController : Controller
     {

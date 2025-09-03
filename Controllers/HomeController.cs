@@ -56,7 +56,7 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
 
         var tables = new List<TableInfo>();
 
-            var result = _databaseHelper.ExecuteSqlQueryWithConnection();
+            //var result = _databaseHelper.ExecuteSqlQueryWithConnection();
 
 
         using (var conn = new SqlConnection(db.ConnectionString))

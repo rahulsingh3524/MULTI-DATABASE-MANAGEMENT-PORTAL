@@ -19,7 +19,7 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
     public class DatabaseHelper
     {
         private readonly IConfiguration _configuration;
-        private readonly string _connStringsConfigPath;
+        //private readonly string _connStringsConfigPath;
         // Use secure key/iv in production, ideally via environment variables or secure storage!
         private static readonly string EncryptionKey = "zQ5nD7pRf3KwL8tVeG0aY2uXiJ6vG4Nb"; // 32 chars  for AES-256
         private static readonly string IVString = "bXc9vYt5rUe2tO7k"; // 16 chars for AES
@@ -29,24 +29,37 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
         public DatabaseHelper(IConfiguration configuration, string connStringsConfigPath)
         {
             _configuration = configuration;
-            _connStringsConfigPath = connStringsConfigPath;
+            //_connStringsConfigPath = connStringsConfigPath;
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
         // Loads connection string for a given DBID from the JSON config
-        public string GetConnectionStringFromContext(string dbId)
-        {
-            var json = File.ReadAllText(_connStringsConfigPath);
-            var context = JsonConvert.DeserializeObject<DbConnectionContext>(json);
-            return context.ConnectionStrings.ContainsKey(dbId) ? context.ConnectionStrings[dbId] : null;
-        }
+        //public string GetConnectionStringFromContext(string dbId)
+        //{
+        //    var json = File.ReadAllText(_connStringsConfigPath);
+        //    var context = JsonConvert.DeserializeObject<DbConnectionContext>(json);
+        //    return context.ConnectionStrings.ContainsKey(dbId) ? context.ConnectionStrings[dbId] : null;
+        //}
 
         // Executes a stored procedure using DBID (high-level API)
         public List<Dictionary<string, object>> ExecuteStoredProcedureWithDbId(string dbId, string spName, SqlParameter[] parameters)
         {
-            var connStr = GetConnectionStringFromContext(dbId);
-            if (string.IsNullOrEmpty(connStr))
-                throw new Exception("Connection string not found for DBID: " + dbId);
+  var parameter = new SqlParameter[]
+{
+    new SqlParameter("@dbid", dbId)
+};
+
+var result = ExecuteStoredProcedure("API_GetDBString", parameter);
+
+string connStr = null;
+if (result.Count > 0 && result[0].ContainsKey("DBConnString"))
+{
+    connStr = result[0]["DBConnString"]?.ToString();
+}
+
+if (string.IsNullOrEmpty(connStr))
+    throw new Exception("Connection string not found for DBID: " + dbId);
+
             return ExecuteStoredProcedureWithConnectionString(connStr, spName, parameters);
         }
 
@@ -155,13 +168,26 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Services
 
         public List<Dictionary<string, object>> ExecuteSqlQueryWithConnection(string dbId, string sqlQuery, SqlParameter[] parameters = null)
         {
-            var connectionString = GetConnectionStringFromContext(dbId);
-            if (string.IsNullOrEmpty(connectionString))
+            var parameter = new SqlParameter[]
+{
+    new SqlParameter("@dbid", dbId)
+};
+
+            var resultC = ExecuteStoredProcedure("API_GetDBString", parameter);
+
+            string connStr = null;
+            if (resultC.Count > 0 && resultC[0].ContainsKey("DBConnString"))
+            {
+                connStr = resultC[0]["DBConnString"]?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(connStr))
                 throw new Exception("Connection string not found for DBID: " + dbId);
+            
 
             var result = new List<Dictionary<string, object>>();
 
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connStr))
             using (var cmd = new SqlCommand(sqlQuery, conn))
             {
                 cmd.CommandType = CommandType.Text; // Indicates raw SQL query
