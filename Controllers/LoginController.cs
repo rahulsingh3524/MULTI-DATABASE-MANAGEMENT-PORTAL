@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using GlassCodeTech_Ticketing_System_Project.Services; // Assuming your services namespace
+using MULTI___DATABASE_MANAGEMENT_PORTAL.Services; // Assuming your services namespace
 using System.Threading.Tasks;
 using System.Data.SqlClient;
-using GlassCodeTech_Ticketing_System_Project.Models;
+using MULTI___DATABASE_MANAGEMENT_PORTAL.Models;
 
-namespace GlassCodeTech_Ticketing_System_Project.Controllers
+namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
 {
     public class LoginController : Controller
     {
@@ -84,7 +84,7 @@ namespace GlassCodeTech_Ticketing_System_Project.Controllers
                };
                 _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", perameters);
 
-                return RedirectToAction("DashboardIndex", "Dashboard");
+                return RedirectToAction("Index", "Home");
             }
             else
             {

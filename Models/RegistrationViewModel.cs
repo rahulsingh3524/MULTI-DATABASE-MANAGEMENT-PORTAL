@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GlassCodeTech_Ticketing_System_Project.Models
+namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Models
 {
     public class RegistrationViewModel
     {
