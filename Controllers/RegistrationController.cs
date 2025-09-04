@@ -23,11 +23,11 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
 
         // POST: /Registration/Register
         [HttpPost]
-        public IActionResult Register(string username, string email, string password, string companyName, string position, string role)
+        public IActionResult Register(string username, string email, string password, string companyName, string position, bool is_Admin)
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(companyName) ||
-                string.IsNullOrWhiteSpace(position) || string.IsNullOrWhiteSpace(role))
+            if (string.IsNullOrWhiteSpace(username) || 
+                string.IsNullOrWhiteSpace(password))
+                //string.IsNullOrWhiteSpace(position) || string.IsNullOrWhiteSpace(role))
             {
                 ModelState.AddModelError("", "All fields including role are required.");
                 return View();
@@ -38,11 +38,10 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
             var parameters = new SqlParameter[]
             {
                 new SqlParameter("@username", username),
-                new SqlParameter("@email", email),
                 new SqlParameter("@password_hash", DatabaseHelper.Encrypt(password)),
                 new SqlParameter("@company_name", companyName),
                 new SqlParameter("@position", position),
-                new SqlParameter("@role", role)
+                new SqlParameter("@is_admin", is_Admin)
             };
 
             _databaseHelper.ExecuteStoredProcedure("sp_RegisterUser", parameters);

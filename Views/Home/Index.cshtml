@@ -1,8 +1,76 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    var databases = ViewBag.Databases as IEnumerable<dynamic>;
+   
+    bool isAdmin = ViewBag.IsAdmin ?? false;
+    int activeCount = ViewBag.ActiveCount ?? 0;
 }
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Welcome</h1>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div id="database-section" class="mb-3">
+        <label for="database-dropdown" class="form-label">Select Database:</label>
+        <select id="database-dropdown" class="form-select">
+            <option value="">-- Select --</option>
+            @if (databases != null)
+            {
+                foreach (var db in databases)
+                {
+                    <option value="@db.DBID">@db.DBName</option>
+                    // Access as properties; if dictionary, use db["DBID"] etc.
+                }
+            }
+        </select>
+    </div>
+
+    <div id="table-section" class="mb-3" style="display:none;">
+        <label for="table-dropdown" class="form-label">Select Table:</label>
+        <select id="table-dropdown" class="form-select">
+            <option value="">-- Select --</option>
+        </select>
+    </div>
+
+    @if (isAdmin)
+    {
+        <div class="mt-4">
+            <p>Total Active Databases: <strong>@activeCount</strong></p>
+            <a class="btn btn-primary" href="@Url.Action("ManageDatabases", "Home")">Manage Databases</a>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(function () {
+            $("#database-dropdown").change(function () {
+                var dbid = $(this).val();
+                if (dbid) {
+                    $.post('@Url.Action("GetTables", "Home")', { dbid: dbid }, function (tables) {
+                        var $tableDropdown = $("#table-dropdown");
+                        $tableDropdown.empty().append('<option value="">-- Select --</option>');
+                        $.each(tables, function (i, table) {
+                            $tableDropdown.append('<option value="' + table.tableName + '">' + table.tableName + '</option>');
+                        });
+                        $("#database-section").hide();
+                        $("#table-section").show();
+                    }).fail(function () {
+                        alert("Failed to load tables.");
+                    });
+                } else {
+                    $("#table-section").hide();
+                    $("#database-section").show();
+                }
+            });
+
+            $("#table-dropdown").change(function () {
+                var tableName = $(this).val();
+                var dbid = $("#database-dropdown").val();
+                if (tableName) {
+                    var url = '@Url.Action("YourTargetAction", "YourTargetController")';
+                    window.location.href = url + "?dbid=" + encodeURIComponent(dbid) + "&table=" + encodeURIComponent(tableName);
+                }
+            });
+        });
+    </script>
+}

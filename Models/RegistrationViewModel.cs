@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Models
 {
     public class RegistrationViewModel
@@ -21,7 +20,8 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Models
         [Required(ErrorMessage = "Position is required")]
         public string Position { get; set; }
 
-        [Required(ErrorMessage = "Please select a role")]
-        public int Role { get; set; }
+        // Checkbox for admin; default is not admin (false)
+        [Display(Name = "Admin")]
+        public bool is_Admin { get; set; }
     }
 }

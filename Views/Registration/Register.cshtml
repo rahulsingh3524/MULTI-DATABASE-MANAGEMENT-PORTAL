@@ -16,11 +16,7 @@
                 <input asp-for="Username" class="form-control" />
                 <span asp-validation-for="Username" class="text-danger"></span>
             </div>
-            <div class="mb-3 col-md-4">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" type="email" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
+           
             <div class="mb-3 col-md-4">
                 <label asp-for="Password" class="form-label"></label>
                 <input asp-for="Password" class="form-control" type="password" id="Password" />
@@ -42,22 +38,13 @@
             </div>
         </div>
 
-        <div class="row">
-            <label class="form-label d-block">Role</label>
-            <div class="form-check form-check-inline">
-                <input asp-for="Role" class="form-check-input" type="radio" value="2" id="roleAdmin" />
-                <label class="form-check-label" for="roleAdmin">Admin</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input asp-for="Role" class="form-check-input" type="radio" value="3" id="roleSupporter" />
-                <label class="form-check-label" for="roleSupporter">Supporter</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input asp-for="Role" class="form-check-input" type="radio" value="1" id="roleCustomer" />
-                <label class="form-check-label" for="roleCustomer">Customer</label>
-            </div>
-            <span asp-validation-for="Role" class="text-danger"></span>
+        <!-- Replace this block in your view -->
+        <div class="form-check">
+            <input asp-for="is_Admin" class="form-check-input" type="checkbox" id="is_Admin" />
+            <label class="form-check-label" for="is_Admin">Admin</label>
         </div>
+
+
 
         <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
     </form>

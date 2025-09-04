@@ -56,33 +56,37 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
             }
 
             string encryptedPassword = DatabaseHelper.Encrypt(password);
+
             var parameters = new SqlParameter[]
             {
-                        new SqlParameter("@username", username),
-                        new SqlParameter("@password_hash", encryptedPassword)
+        new SqlParameter("@username", username),
+        new SqlParameter("@password_hash", encryptedPassword)
             };
 
+            // Call VerifyUser stored procedure (table: Master_User)
             var result = _databaseHelper.ExecuteStoredProcedure("VerifyUser", parameters);
 
             if (result != null && result.Count > 0)
             {
                 var row = result[0];
                 var loginDetail = new Dictionary<string, string>
-                        {
-                            { logindata.Id, DatabaseHelper.Encrypt(row["id"]?.ToString() ?? "") },
-                            { logindata.Username, DatabaseHelper.Encrypt(row["username"]?.ToString() ?? "") },
-                            { logindata.Email, DatabaseHelper.Encrypt(row["email"]?.ToString() ?? "") },
-                            { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
-                            { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
-                            { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
-                        };
+        {
+            { logindata.Id, DatabaseHelper.Encrypt(row["ID"]?.ToString() ?? "") },
+            { logindata.Username, DatabaseHelper.Encrypt(row["UserName"]?.ToString() ?? "") },
+            { logindata.Email, "" }, // Email column not returned by SP, add if needed
+            { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
+            { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
+            { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
+        };
+
                 _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
 
-                var perameters = new SqlParameter[]
-               {
-                            new SqlParameter("@id", row["id"]?.ToString() ?? "")
-               };
-                _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", perameters);
+            //    var historyParams = new SqlParameter[]
+            //    {
+            //new SqlParameter("@id", row["ID"]?.ToString() ?? "")
+            //    };
+
+            //    _databaseHelper.ExecuteStoredProcedure("sp_savelogin_history", historyParams);
 
                 return RedirectToAction("Index", "Home");
             }
@@ -118,7 +122,7 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
 
             if (result != null && result.Count > 0)
             {
-                return RedirectToAction("DashboardIndex", "Dashboard");
+                return RedirectToAction("Index", "Home");
             }
             else
             {
