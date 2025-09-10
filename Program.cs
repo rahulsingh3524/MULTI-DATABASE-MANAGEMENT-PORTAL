@@ -5,26 +5,38 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register IHttpContextAccessor for CookieService (if used)
+// Register IHttpContextAccessor for services needing HttpContext access
 builder.Services.AddHttpContextAccessor();
 
-// Register DatabaseHelper with factory lambda to provide config and JSON path
+// Register AuditService (required by DatabaseService)
+builder.Services.AddScoped<AuditService>();
+
+// Register DatabaseHelper with config and JSON path as factory
 builder.Services.AddScoped<DatabaseHelper>(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
-    // Adjust the path below according to your actual JSON file location relative to app root
+    // Adjust the path if your connStringContext.json is elsewhere
     var connStringsConfigPath = "connStringContext.json";
     return new DatabaseHelper(config, connStringsConfigPath);
 });
 
-// Register other services
+// Register your services
+builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<NotificationService>();
 
+// Enable session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -33,11 +45,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseSession();         // Ensure this is before UseRouting/UseEndpoints
 app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Login}/{action=Login}/{id?}");
+    pattern: "{controller=Login}/{action=Login}/{id?}"
+);
 
 app.Run();

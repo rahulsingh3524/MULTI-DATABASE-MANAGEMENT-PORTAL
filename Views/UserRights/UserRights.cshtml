@@ -1,0 +1,103 @@
+﻿@model UserRightsViewModel
+
+<div class="content-wrapper p-3">
+    <section class="content-header">
+        <div class="container-fluid">
+            <h1><i class="fas fa-user-shield"></i> User Rights Allocation</h1>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <form method="get" asp-action="UserRights" class="form-inline">
+                    <label class="mr-2 font-weight-bold"><i class="fas fa-user"></i> Select User:</label>
+                    <select name="userId" class="form-control mr-2" onchange="this.form.submit()" required style="width: 220px;">
+                        <option value="">-- Select User --</option>
+                        @foreach (var user in Model.Users)
+        {
+            @:<option value="@user.ID" @(user.ID == Model.SelectedUserId ? "selected=\"selected\"" : "")>@user.UserName</option>
+        }
+                    </select>
+                </form>
+            </div>
+            @if (Model.SelectedUserId != 0)
+            {
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-success">
+                                <div class="card-header bg-success">
+                                    <h3 class="card-title"><i class="fas fa-database"></i> Allocated Databases</h3>
+                                </div>
+                                <div class="card-body p-2">
+                                    @if(Model.AllocatedDatabases != null && Model.AllocatedDatabases.Count > 0)
+                                    {
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Database Name</th>
+                                                    <th style="width:100px;">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach(var db in Model.AllocatedDatabases)
+                                                {
+                                                    <tr>
+                                                        <td>@db.DBName</td>
+                                                        <td>
+                                                            <form method="post" asp-action="DeallocateDatabase" class="d-inline">
+                                                                <input type="hidden" name="SelectedUserId" value="@Model.SelectedUserId" />
+                                                                <input type="hidden" name="SelectedDatabaseId" value="@db.ID" />
+                                                                <button type="submit" class="btn btn-danger btn-xs">
+                                                                    <i class="fas fa-trash-alt"></i> Remove
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-secondary mb-0">No databases allocated.</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-warning">
+                                <div class="card-header bg-warning">
+                                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> Allocate New Database</h3>
+                                </div>
+                                <div class="card-body p-2">
+                                    @if(Model.UnallocatedDatabases != null && Model.UnallocatedDatabases.Count > 0)
+                                    {
+                                        <form method="post" asp-action="AllocateDatabase" class="form-inline">
+                                            <input type="hidden" name="SelectedUserId" value="@Model.SelectedUserId" />
+                                            <select name="SelectedDatabaseId" class="form-control mr-2" required>
+                                                <option value="">-- Select Database --</option>
+                                                @foreach(var db in Model.UnallocatedDatabases)
+                                                {
+                                                    <option value="@db.ID">@db.DBName</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Allocate
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info mb-0">All databases are already allocated to this user.</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>

@@ -1,0 +1,67 @@
+﻿@* @model List<string>
+
+@{
+    ViewData["Title"] = "Create Record";
+}
+
+<h1>Create a new record in @ViewBag.TableName</h1>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+    @foreach (var column in Model)
+    {
+        <div class="form-group mb-3">
+            <label for="@column">@column</label>
+            <input type="text" name="@column" id="@column" class="form-control" />
+        </div>
+    }
+    <button type="submit" class="btn btn-success">Create</button>
+    <a href="/Data/ViewTable?tableName=@ViewBag.TableName" class="btn btn-secondary">Cancel</a>
+</form> *@
+
+@* @using System.Data
+@model System.Data.DataTable
+@{
+    ViewData["Title"] = "Create Record";
+}
+
+<h2>Add New Record - @ViewBag.TableName</h2>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+    @foreach (DataColumn column in Model.Columns)
+    {
+        if (!column.AutoIncrement) // skip identity column
+        {
+            <div class="mb-2">
+                <label>@column.ColumnName</label>
+                <input type="text" name="@column.ColumnName" class="form-control" />
+            </div>
+        }
+    }
+    <button type="submit" class="btn btn-success">Save</button>
+    <a asp-action="ViewTable" asp-route-tableName="@ViewBag.TableName" class="btn btn-secondary">Cancel</a>
+</form>
+ *@
+
+
+@model List<string>
+
+@{
+    ViewData["Title"] = "Create Record";
+}
+
+<h2>Add New Record - @ViewBag.TableName</h2>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+    @foreach (var column in Model)
+    {
+        <div class="mb-2">
+            <label>@column</label>
+            <input type="text" name="@column" class="form-control" />
+        </div>
+    }
+    <button type="submit" class="btn btn-success">Save</button>
+    <a asp-action="ViewTable" asp-route-tableName="@ViewBag.TableName" class="btn btn-secondary">Cancel</a>
+</form>

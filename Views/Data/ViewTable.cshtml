@@ -1,0 +1,264 @@
+﻿
+
+@using System.Data
+
+@model System.Data.DataTable
+@{
+    ViewData["Title"] = "Table View";
+    var tableColumns = Model.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToList();
+
+    // Pagination and sorting variables from ViewBag
+    int currentPage = ViewBag.CurrentPage;
+    int totalPages = ViewBag.TotalPages;
+    string sortColumn = ViewBag.SortColumn;
+    string sortOrder = ViewBag.SortOrder;
+    string searchColumn = ViewBag.SearchColumn;
+    string searchOperator = ViewBag.SearchOperator;
+    string searchValue = ViewBag.SearchValue;
+    string searchValue2 = ViewBag.SearchValue2;
+
+    // string prevDisabled = !Model.Rows.Any() || currentPage <= 1 ? "disabled" : "";
+    // string nextDisabled = !Model.Rows.Any() || currentPage >= totalPages ? "disabled" : "";
+    string prevDisabled = !Model.Rows.Cast<DataRow>().Any() || currentPage <= 1 ? "disabled" : "";
+    string nextDisabled = !Model.Rows.Cast<DataRow>().Any() || currentPage >= totalPages ? "disabled" : "";
+
+}
+
+<a class="btn btn-success mb-3" onclick="showAddRow()">+ Add New Record</a>
+
+<div class="card mb-3">
+    <div class="card-header">
+        Search
+    </div>
+    <div class="card-body">
+        <form asp-action="ViewTable" method="get">
+            <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="searchColumn" class="form-label">Column</label>
+                    <select class="form-control" id="searchColumn" name="searchColumn">
+                        <option value="">-- Select Column --</option>
+                        @foreach (var column in tableColumns)
+                        {
+                            <option value="@column" selected="@(ViewBag.SearchColumn == column)">@column</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="searchOperator" class="form-label">Operator</label>
+                    <select class="form-control" id="searchOperator" name="searchOperator" onchange="toggleSecondValue()">
+                        <option value="=" selected="@(ViewBag.SearchOperator == "=")">Equal (=)</option>
+                        <option value="!=" selected="@(ViewBag.SearchOperator == "!=") ">Not Equal (!=)</option>
+                        <option value="LIKE" selected="@(ViewBag.SearchOperator == "LIKE")">Like</option>
+                        <option value=">" selected="@(ViewBag.SearchOperator == ">")">Greater Than (>)</option>
+                        <option value="<" selected="@(ViewBag.SearchOperator == "<")">Less Than (<)</option>
+                        <option value="BETWEEN" selected="@(ViewBag.SearchOperator == "BETWEEN")">Between</option>
+                        <option value="DISTINCT" selected="@(ViewBag.SearchOperator == "DISTINCT")">Distinct</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="searchValue1" class="form-label">Value</label>
+                    <input type="text" class="form-control" id="searchValue1" name="searchValue" value="@ViewBag.SearchValue" />
+                </div>
+                <div class="col-md-3" id="searchValue2Container" style="display:none;">
+                    <label for="searchValue2" class="form-label">And</label>
+                    <input type="text" class="form-control" id="searchValue2" name="searchValue2" value="@ViewBag.SearchValue2" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped" id="dataTable">
+    <thead>
+        <tr>
+            @foreach (DataColumn column in Model.Columns)
+            {
+                <th>
+                    <a asp-action="ViewTable"
+                       asp-route-tableName="@ViewBag.TableName"
+                       asp-route-searchColumn="@ViewBag.SearchColumn"
+                       asp-route-searchOperator="@ViewBag.SearchOperator"
+                       asp-route-searchValue="@ViewBag.SearchValue"
+                       asp-route-searchValue2="@ViewBag.SearchValue2"
+                       asp-route-sortColumn="@column.ColumnName"
+                       asp-route-sortOrder="@(sortColumn == column.ColumnName && sortOrder == "asc" ? "desc" : "asc")"
+                       asp-route-page="@currentPage">
+                        @column.ColumnName
+                        @if (sortColumn == column.ColumnName)
+                        {
+                            <i class="fas fa-sort-@(sortOrder == "asc" ? "up" : "down")"></i>
+                        }
+                    </a>
+                </th>
+            }
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (DataRow row in Model.Rows)
+        {
+            <tr data-id="@row[0]">
+                @for (int i = 0; i < Model.Columns.Count; i++)
+                {
+                    DataColumn column = Model.Columns[i];
+                    if (i == 0)
+                    {
+                        <td class="col-@column.ColumnName" data-is-key="true">@row[column.ColumnName]</td>
+                    }
+                    else
+                    {
+                        <td class="col-@column.ColumnName">@row[column.ColumnName]</td>
+                    }
+                }
+                <td class="actions">
+                    <button class="btn btn-warning btn-sm" onclick="editRow(this)">Edit</button>
+                    <form asp-action="Delete" method="post" style="display:inline;">
+                        <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+                        <input type="hidden" name="keyColumn" value="@Model.Columns[0].ColumnName" />
+                        <input type="hidden" name="id" value="@row[0]" />
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+
+        <tr id="addRow" style="display:none;">
+            @for (int i = 0; i < Model.Columns.Count; i++)
+            {
+                if (i == 0)
+                {
+                    <td></td>
+                }
+                else
+                {
+                    <td><input class="form-control" name="@Model.Columns[i].ColumnName" /></td>
+                }
+            }
+            <td class="actions">
+                <button class="btn btn-success btn-sm" onclick="saveNewRecord()">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelAdd()">Cancel</button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @prevDisabled">
+            <a class="page-link" href="@Url.Action("ViewTable", new { tableName = ViewBag.TableName, page = currentPage - 1, pageSize = ViewBag.PageSize, sortColumn = sortColumn, sortOrder = sortOrder, searchColumn = searchColumn, searchOperator = searchOperator, searchValue = searchValue, searchValue2 = searchValue2 })">Previous</a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == currentPage ? "active" : "")">
+                <a class="page-link" href="@Url.Action("ViewTable", new { tableName = ViewBag.TableName, page = i, pageSize = ViewBag.PageSize, sortColumn = sortColumn, sortOrder = sortOrder, searchColumn = searchColumn, searchOperator = searchOperator, searchValue = searchValue, searchValue2 = searchValue2 })">@i</a>
+            </li>
+        }
+        <li class="page-item @nextDisabled">
+            <a class="page-link" href="@Url.Action("ViewTable", new { tableName = ViewBag.TableName, page = currentPage + 1, pageSize = ViewBag.PageSize, sortColumn = sortColumn, sortOrder = sortOrder, searchColumn = searchColumn, searchOperator = searchOperator, searchValue = searchValue, searchValue2 = searchValue2 })">Next</a>
+        </li>
+    </ul>
+</nav>
+
+@section Scripts {
+    <script>
+        function showAddRow() {
+            document.getElementById("addRow").style.display = "table-row";
+        }
+
+        function cancelAdd() {
+            document.getElementById("addRow").style.display = "none";
+        }
+
+        function saveNewRecord() {
+            let row = document.getElementById("addRow");
+            let inputs = row.querySelectorAll("input");
+            let data = {};
+            inputs.forEach(input => { data[input.name] = input.value; });
+            data["tableName"] = "@ViewBag.TableName";
+
+            fetch("/Data/Create", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => location.reload());
+        }
+
+        function editRow(button) {
+            let row = button.closest("tr");
+            let keyColumnName = "@Model.Columns[0].ColumnName";
+
+            row.querySelectorAll("td").forEach(td => {
+                if (!td.classList.contains("actions")) {
+                    if (td.dataset.isKey === "true") {
+                        // Key column remains as text, no input field.
+                    } else {
+                        let val = td.innerText;
+                        let columnName = td.className.replace('col-', '');
+                        td.innerHTML = `<input class="form-control" value="${val}" name="${columnName}" />`;
+                    }
+                }
+            });
+
+            // Replace the 'Edit' button with 'Save' and 'Cancel'
+            let actionsCell = row.querySelector(".actions");
+            actionsCell.innerHTML = `
+                <button class='btn btn-success btn-sm' onclick='saveEdit(this)'>Save</button>
+                <button class='btn btn-secondary btn-sm' onclick='cancelEdit()'>Cancel</button>
+            `;
+        }
+
+        function cancelEdit() {
+            location.reload();
+        }
+
+        function saveEdit(button) {
+            let row = button.closest("tr");
+            let id = row.getAttribute("data-id");
+            let inputs = row.querySelectorAll("input");
+            let data = { id: id, tableName: "@ViewBag.TableName", keyColumn: "@Model.Columns[0].ColumnName" };
+
+            inputs.forEach(input => {
+                data[input.name] = input.value;
+            });
+
+            fetch("/Data/Edit", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => location.reload());
+        }
+
+        function toggleSecondValue() {
+            const operator = document.getElementById("searchOperator").value;
+            const secondValueContainer = document.getElementById("searchValue2Container");
+            const firstValueInput = document.getElementById("searchValue1");
+
+            if (operator === "BETWEEN") {
+                secondValueContainer.style.display = "block";
+                firstValueInput.placeholder = "Start value";
+            } else {
+                secondValueContainer.style.display = "none";
+                firstValueInput.placeholder = "";
+            }
+
+            if (operator === "DISTINCT") {
+                firstValueInput.style.display = "none";
+                firstValueInput.removeAttribute("name");
+            } else {
+                firstValueInput.style.display = "block";
+                firstValueInput.setAttribute("name", "searchValue");
+            }
+        }
+
+        // Call on page load to set initial state
+        document.addEventListener("DOMContentLoaded", function() {
+            toggleSecondValue();
+        });
+    </script>
+}

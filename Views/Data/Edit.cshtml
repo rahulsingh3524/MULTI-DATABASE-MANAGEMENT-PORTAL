@@ -1,0 +1,25 @@
+﻿@using System.Data
+
+@model System.Data.DataRow
+@{
+    ViewData["Title"] = "Edit Record";
+}
+
+<h2>Edit Record - @ViewBag.TableName</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" name="tableName" value="@ViewBag.TableName" />
+    <input type="hidden" name="keyColumn" value="@ViewBag.KeyColumn" />
+    <input type="hidden" name="id" value="@Model[@ViewBag.KeyColumn]" />
+
+    @foreach (DataColumn column in Model.Table.Columns)
+    {
+        <div class="mb-2">
+            <label>@column.ColumnName</label>
+            <input type="text" name="@column.ColumnName" class="form-control"
+                   value="@Model[column.ColumnName]" @(column.ColumnName == ViewBag.KeyColumn ? "readonly" : "") />
+        </div>
+    }
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a asp-action="ViewTable" asp-route-tableName="@ViewBag.TableName" class="btn btn-secondary">Cancel</a>
+</form>

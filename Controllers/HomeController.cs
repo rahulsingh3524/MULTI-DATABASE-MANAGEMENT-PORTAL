@@ -15,20 +15,28 @@ namespace MULTI___DATABASE_PORTAL.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly DatabaseHelper _databaseHelper;
+        private readonly CookieService _cookieService;  
+        public LoginDetail logindata;
 
-        public HomeController(ILogger<HomeController> logger, DatabaseHelper databaseHelper)
+        public HomeController(ILogger<HomeController> logger, DatabaseHelper databaseHelper, CookieService cookieService)
         {
             _logger = logger;
             _databaseHelper = databaseHelper;
+            logindata = new LoginDetail();
+            _cookieService = cookieService;
         }
 
         // Main page: select database, then table
-       
+
         public IActionResult Index()
         {
+            var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+            if (cookieDict == null || !cookieDict.ContainsKey(logindata.Id))
+                return RedirectToAction("Login", "Login");
+            bool isadmin = Convert.ToBoolean(DatabaseHelper.Decrypt(cookieDict[logindata.IsAdmin]));
             var dbList = GetDatabaseList() ?? new List<DatabaseInfo>(); // now only active dbs
             ViewBag.Databases = dbList;
-            ViewBag.IsAdmin = IsUserAdmin();
+            ViewBag.IsAdmin = isadmin;
             ViewBag.ActiveCount = ViewBag.IsAdmin ? dbList.Count : 0;
             return View();
         }
@@ -39,6 +47,7 @@ namespace MULTI___DATABASE_PORTAL.Controllers
         public IActionResult GetTables(int dbid)
         {
             var tables = GetTablesForDatabase(dbid);
+            HttpContext.Session.SetString("SelectedDbId", dbid.ToString());
             return Json(tables);
         }
 
@@ -75,10 +84,16 @@ namespace MULTI___DATABASE_PORTAL.Controllers
         // Get tables for selected DB
         public List<TableInfo> GetTablesForDatabase(int dbid)
         {
+            //var tables = new List<TableInfo>();
+
+            //tables = _databaseHelper.ExecuteSqlQueryWithConnection(dbid, "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
+
+
             var databases = GetDatabaseList();
             var db = databases.FirstOrDefault(d => d.DBID == dbid);
             if (db == null) return new List<TableInfo>();
             var tables = new List<TableInfo>();
+       
             try
             {
                 //using (var conn = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=database1;TrustServerCertificate=False;"))
@@ -96,20 +111,20 @@ namespace MULTI___DATABASE_PORTAL.Controllers
                 //Console.WriteLine("Hardcoded bytes: " + string.Join(",", hardcoded.Select(c => (int)c)));
                 //Console.WriteLine("DB String bytes: " + string.Join(",", constr.Select(c => (int)c)));
 
+                tables = _databaseHelper.GetTables(dbid);
 
-
-                using (var conn = new SqlConnection(db.ConnectionString))
-                {
-                    conn.Open();
-                    using (var cmd = new SqlCommand("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'", conn))
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            tables.Add(new TableInfo { TableName = reader.GetString(0) });
-                        }
-                    }
-                }
+                //using (var conn = new SqlConnection(db.ConnectionString))
+                //{
+                //    conn.Open();
+                //    using (var cmd = new SqlCommand("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'", conn))
+                //    using (var reader = cmd.ExecuteReader())
+                //    {
+                //        while (reader.Read())
+                //        {
+                //            tables.Add(new TableInfo { TableName = reader.GetString(0) });
+                //        }
+                //    }
+                //}
             }
             catch (Exception ex)
             {
@@ -155,6 +170,80 @@ namespace MULTI___DATABASE_PORTAL.Controllers
             return RedirectToAction("ManageDatabases");
         }
 
+        [HttpPost]
+        public IActionResult SearchDatabase(int dbId, string search)
+        {
+            var database = GetDatabaseList().FirstOrDefault(d => d.DBID == dbId);
+            if (database == null || string.IsNullOrEmpty(search))
+                return Json(new List<object>());
+
+            var results = new List<object>();
+
+            using (var conn = new SqlConnection(database.ConnectionString))
+            {
+                conn.Open();
+
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+            SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE DATA_TYPE IN ('varchar', 'nvarchar', 'char', 'nchar', 'text', 'ntext')
+        ";
+
+                var reader = cmd.ExecuteReader();
+                var columns = new List<(string Schema, string Table, string Column)>();
+
+                while (reader.Read())
+                {
+                    columns.Add((
+                        reader.GetString(0), // schema
+                        reader.GetString(1), // table
+                        reader.GetString(2)  // column
+                    ));
+                }
+
+                reader.Close();
+
+                foreach (var col in columns)
+                {
+                    try
+                    {
+                        var sql = $@"
+                    SELECT TOP 50 '{col.Table}' AS TableName, '{col.Column}' AS ColumnName, CAST([{col.Column}] AS NVARCHAR(MAX)) AS MatchedValue
+                    FROM [{col.Schema}].[{col.Table}]
+                    WHERE [{col.Column}] LIKE @search
+                ";
+
+                        var searchCmd = conn.CreateCommand();
+                        searchCmd.CommandText = sql;
+                        searchCmd.Parameters.AddWithValue("@search", $"%{search}%");
+
+                        using (var r = searchCmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                results.Add(new
+                                {
+                                    tableName = r["TableName"].ToString(),
+                                    columnName = r["ColumnName"].ToString(),
+                                    matchedValue = r["MatchedValue"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // log or ignore problematic columns (binary, etc.)
+                    }
+                }
+
+                conn.Close();
+            }
+
+            return Json(results);
+        }
+
+
 
         // Admin only page for managing databases
         public IActionResult ManageDatabases()
@@ -189,23 +278,14 @@ namespace MULTI___DATABASE_PORTAL.Controllers
         // Replace with your actual admin check logic
         private bool IsUserAdmin()
         {
-            // Example: Check user identity, claims, or cookie session for admin flag.
-            return true;
+            var cookieDict = _cookieService.GetDictionaryFromCookie("UI");
+            bool isadmin = Convert.ToBoolean(DatabaseHelper.Decrypt(cookieDict[logindata.IsAdmin]));
+            return isadmin;
         }
 
-        // Models
-        public class DatabaseInfo
-        {
-            public int DBID { get; set; }
-            public string DBName { get; set; }
-            public string ConnectionString { get; set; }
-            public bool IsActive { get; set; }
-        }
+    
 
-        public class TableInfo
-        {
-            public string TableName { get; set; }
-        }
+       
 
         public IActionResult Privacy() => View();
 

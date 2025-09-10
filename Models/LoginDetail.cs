@@ -10,6 +10,7 @@
         public string CompanyName => "D";
         public string Position => "E";
         public string Role => "F";
+        public string IsAdmin => "G";
 
         //// Data properties can be separate, for holding actual values
         //public string IdValue { get; set; }

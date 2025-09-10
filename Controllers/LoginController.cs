@@ -76,7 +76,8 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
             { logindata.Email, "" }, // Email column not returned by SP, add if needed
             { logindata.CompanyName, DatabaseHelper.Encrypt(row["company_name"]?.ToString() ?? "") },
             { logindata.Position, DatabaseHelper.Encrypt(row["position"]?.ToString() ?? "") },
-            { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") }
+            { logindata.Role, DatabaseHelper.Encrypt(row["role"]?.ToString() ?? "") },
+            { logindata.IsAdmin, DatabaseHelper.Encrypt(row["is_admin"]?.ToString() ?? "") }
         };
 
                 _cookieService.SetKeyValueInCookie("UI", loginDetail, 30);
