@@ -45,40 +45,40 @@ namespace MULTI___DATABASE_MANAGEMENT_PORTAL.Controllers
         }
 
 
-      
 
-    public List<TableInfo> GetTableListForDatabase(int dbid)
-    {
-        // Get list of all databases from config
-        List<DatabaseInfo> dbList = GetDatabaseList();
-        var db = dbList.FirstOrDefault(d => d.DBID == dbid);
-        if (db == null) return new List<TableInfo>();
 
-        var tables = new List<TableInfo>();
+        public List<TableInfo> GetTableListForDatabase(int dbid)
+        {
+            // Get list of all databases from config
+            List<DatabaseInfo> dbList = GetDatabaseList();
+            var db = dbList.FirstOrDefault(d => d.DBID == dbid);
+            if (db == null) return new List<TableInfo>();
+
+            var tables = new List<TableInfo>();
 
             //var result = _databaseHelper.ExecuteSqlQueryWithConnection();
 
 
-        using (var conn = new SqlConnection(db.ConnectionString))
-        {
-            conn.Open();
-            // Query for user tables
-            using (var cmd = new SqlCommand("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'", conn))
-            using (var reader = cmd.ExecuteReader())
+            using (var conn = new SqlConnection(db.ConnectionString))
             {
-                while (reader.Read())
+                conn.Open();
+                // Query for user tables
+                using (var cmd = new SqlCommand("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'", conn))
+                using (var reader = cmd.ExecuteReader())
                 {
-                    tables.Add(new TableInfo { TableName = reader.GetString(0) });
+                    while (reader.Read())
+                    {
+                        tables.Add(new TableInfo { TableName = reader.GetString(0) });
+                    }
                 }
             }
+            return tables;
         }
-        return tables;
-    }
 
-    public class TableInfo
-    {
-        public string TableName { get; set; }
-}
+        public class TableInfo
+        {
+            public string TableName { get; set; }
+        }
 
 
 

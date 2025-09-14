@@ -1,4 +1,12 @@
+using MULTI___DATABASE_MANAGEMENT_PORTAL.Services;
+
 var builder = WebApplication.CreateBuilder(args);
+
+//// Retrieve the master connection string from your app's configuration (e.g., appsettings.json)
+//var masterConnectionString = builder.Configuration.GetConnectionString("MasterDbConnection");
+
+//// Register the DatabaseHelper service with the connection string
+//builder.Services.AddSingleton(new DatabaseHelper(masterConnectionString));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
